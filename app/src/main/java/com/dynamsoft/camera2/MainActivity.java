@@ -49,6 +49,9 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+
 public class MainActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
     private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    private static final int TIMER_VALUE = 10;
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -166,10 +170,10 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         mTextureView = findViewById(R.id.textureView);
         save = findViewById(R.id.GotIt);
         mTextureView.setSurfaceTextureListener(this);
-        save.setOnClickListener(v -> onBtnSavePng(v));
-
-
-
+        save.setOnClickListener(v -> {
+            save.setClickable(false);
+            startTime(v);
+        });
     }
 
     public void onBtnSavePng(View view) {
@@ -336,6 +340,26 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    //This Function Will Create Counter
+    public void startTime(View view) {
+        //Creating Timer For Otp
+        Observable.interval(1, TimeUnit.MINUTES)
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(x -> {
+                    // update your view here
+                    save.setText(String.valueOf(TIMER_VALUE - x));
+                    onBtnSavePng(view);
+                })
+                .takeUntil(aLong -> aLong == TIMER_VALUE)
+                .doOnComplete(() -> {
+                            //After Timer
+                    save.setText("Exam Complete");
+                    save.setClickable(true);
+                        }
+                ).subscribe();
+
     }
 
     private void openCamera(int width, int height) {
