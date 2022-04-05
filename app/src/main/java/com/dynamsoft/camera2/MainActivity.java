@@ -68,9 +68,9 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private AutoFitTextureView mTextureView;
     private Button save;
-    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private String mCameraId;
     private CameraDevice mCameraDevice;
     private CameraCaptureSession mCaptureSession;
@@ -172,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         mTextureView.setSurfaceTextureListener(this);
         save.setOnClickListener(v -> {
             save.setClickable(false);
+            save.setText(String.valueOf(TIMER_VALUE));
             startTime(v);
         });
     }
@@ -350,13 +351,14 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
                 .doOnNext(x -> {
                     // update your view here
                     save.setText(String.valueOf(TIMER_VALUE - x));
+                    //TODO saving image
                     onBtnSavePng(view);
                 })
                 .takeUntil(aLong -> aLong == TIMER_VALUE)
                 .doOnComplete(() -> {
                             //After Timer
-                    save.setText("Exam Complete");
-                    save.setClickable(true);
+                            save.setText("Exam Complete");
+                            save.setClickable(true);
                         }
                 ).subscribe();
 
@@ -375,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            manager.openCamera(mCameraId, mStateCallback, null);
+            manager.openCamera(String.valueOf(1), mStateCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
